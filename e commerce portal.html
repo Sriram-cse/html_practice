@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini E-Commerce Portal (Demo)</title>
+  <style>
+    :root{--accent:#0b6efd;--muted:#666;--bg:#f6f7fb}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial; margin:0; background:var(--bg); color:#111}
+    header{background:#fff; border-bottom:1px solid #e6e9ef; position:sticky; top:0; z-index:10}
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    .nav{display:flex;align-items:center;gap:16px}
+    .brand{font-weight:700;color:var(--accent)}
+    nav ul{list-style:none;padding:0;margin:0;display:flex;gap:12px}
+    nav a{color:#333;text-decoration:none;padding:8px 10px;border-radius:6px}
+    nav a.active, nav a:hover{background:#eef5ff;color:var(--accent)}
+    .right{margin-left:auto;display:flex;gap:8px}
+    button{background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+    main{padding:24px}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+    .card{background:#fff;padding:16px;border-radius:10px;box-shadow:0 6px 18px rgba(20,20,40,0.04)}
+
+    /* product list */
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+    .product{padding:12px;border:1px solid #eef2f7;border-radius:8px;display:flex;flex-direction:column;gap:8px}
+    .product img{width:100%;height:140px;object-fit:cover;border-radius:6px}
+    .actions{display:flex;gap:8px}
+
+    /* forms */
+    form{display:flex;flex-direction:column;gap:10px}
+    label{font-size:13px;color:var(--muted)}
+    input,select,textarea{padding:10px;border-radius:8px;border:1px solid #d7dbe6}
+    .error{color:#b70200;font-size:13px}
+
+    /* lists */
+    ul.simple{padding-left:18px;margin:0}
+
+    /* small screens */
+    @media (max-width:880px){.grid{grid-template-columns:1fr}.right{display:none}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">ShopDemo</div>
+      <nav>
+        <ul>
+          <li><a href="#home" class="navlink active">Home</a></li>
+          <li><a href="#products" class="navlink">Product Items</a></li>
+          <li><a href="#contact" class="navlink">Contact Us</a></li>
+          <li><a href="#about" class="navlink">About Us</a></li>
+        </ul>
+      </nav>
+
+      <div class="right">
+        <div id="userArea"> <button id="openLogin">Login</button> <button id="openRegister">Register</button></div>
+        <button id="viewWishlist">Wishlist (0)</button>
+        <button id="viewOrders">Orders (0)</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="home" class="card">
+      <h2>Welcome to ShopDemo</h2>
+      <p>This is a demo e-commerce portal with client-side features: navigation, registration & login validation, wishlist, orders, reviews, and customer care reporting UI.</p>
+    </section>
+
+    <div class="grid" style="margin-top:16px">
+      <section class="card">
+        <h3 id="products">Products</h3>
+        <div class="products" id="productsList"></div>
+      </section>
+
+      <aside class="card">
+        <h4>User / Actions</h4>
+        <div id="panelContent">
+          <p><strong>Not logged in</strong></p>
+          <p>Use the Register or Login buttons to create an account (all client-side demo).</p>
+        </div>
+      </aside>
+    </div>
+
+    <section class="card" style="margin-top:16px">
+      <h3>Customer Care & Reporting</h3>
+      <form id="reportForm">
+        <label for="issueType">Issue type</label>
+        <select id="issueType"><option>Order issue</option><option>Product quality</option><option>Return request</option><option>Other</option></select>
+        <label for="issueMsg">Describe the issue</label>
+        <textarea id="issueMsg" rows="4"></textarea>
+        <div><button type="submit">Submit Report</button></div>
+      </form>
+      <div id="reportsArea" style="margin-top:10px"></div>
+    </section>
+
+    <section class="card" id="contact" style="margin-top:16px">
+      <h3>Contact & About</h3>
+      <p id="about">This mini portal is built for demonstration purposes. It runs purely in your browser — no server. Use it to test UI flows.</p>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <h3>Orders & Wishlist & Reviews</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <h4>Orders</h4>
+          <ul id="ordersList" class="simple"></ul>
+        </div>
+        <div>
+          <h4>Wishlist</h4>
+          <ul id="wishlist" class="simple"></ul>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <h4>Comments & Reviews</h4>
+        <ul id="reviews" class="simple"></ul>
+        <form id="reviewForm" style="margin-top:10px">
+          <label for="revText">Add review/comment</label>
+          <input id="revText" placeholder="Write your feedback" />
+          <button type="submit">Add Review</button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Login & Register Modal (simple) -->
+  <div id="modal" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.4)">
+    <div style="width:420px;background:#fff;border-radius:12px;overflow:hidden">
+      <div style="padding:12px;border-bottom:1px solid #eee;display:flex;gap:8px;align-items:center">
+        <strong id="modalTitle">Login</strong>
+        <div style="margin-left:auto"><button id="closeModal">Close</button></div>
+      </div>
+      <div style="padding:12px">
+        <div id="loginPanel">
+          <form id="loginForm">
+            <label>Email</label>
+            <input id="loginEmail" type="email" required />
+            <label>Password</label>
+            <input id="loginPass" type="password" minlength="6" required />
+            <div class="error" id="loginError"></div>
+            <div style="display:flex;gap:8px;margin-top:8px"><button type="submit">Login</button><button type="button" id="toRegister">Go to Register</button></div>
+          </form>
+        </div>
+
+        <div id="registerPanel" style="display:none">
+          <form id="registerForm">
+            <label>Full name</label>
+            <input id="regName" required />
+            <div class="error" id="nameErr"></div>
+            <label>Email</label>
+            <input id="regEmail" type="email" required />
+            <div class="error" id="emailErr"></div>
+            <label>Password</label>
+            <input id="regPass" type="password" minlength="6" required />
+            <div class="error" id="passErr"></div>
+            <label>Confirm password</label>
+            <input id="regPass2" type="password" required />
+            <div class="error" id="pass2Err"></div>
+            <div style="display:flex;gap:8px;margin-top:8px"><button type="submit">Register</button><button type="button" id="toLogin">Go to Login</button></div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // sample products
+    const sampleProducts = [
+      {id:1,name:'Wireless Headphones',price:1999, img:'https://picsum.photos/seed/p1/400/300'},
+      {id:2,name:'Smart Watch',price:2999, img:'https://picsum.photos/seed/p2/400/300'},
+      {id:3,name:'Running Shoes',price:2599, img:'https://picsum.photos/seed/p3/400/300'},
+      {id:4,name:'Backpack',price:1199, img:'https://picsum.photos/seed/p4/400/300'}
+    ];
+
+    // state persisted in localStorage for demo
+    const state = {
+      users: JSON.parse(localStorage.getItem('users')||'[]'),
+      currentUser: JSON.parse(localStorage.getItem('currentUser')||'null'),
+      wishlist: JSON.parse(localStorage.getItem('wishlist')||'[]'),
+      orders: JSON.parse(localStorage.getItem('orders')||'[]'),
+      reviews: JSON.parse(localStorage.getItem('reviews')||'[]'),
+      reports: JSON.parse(localStorage.getItem('reports')||'[]')
+    };
+
+    // helpers
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => document.querySelectorAll(sel);
+
+    function saveState(){
+      localStorage.setItem('users', JSON.stringify(state.users));
+      localStorage.setItem('currentUser', JSON.stringify(state.currentUser));
+      localStorage.setItem('wishlist', JSON.stringify(state.wishlist));
+      localStorage.setItem('orders', JSON.stringify(state.orders));
+      localStorage.setItem('reviews', JSON.stringify(state.reviews));
+      localStorage.setItem('reports', JSON.stringify(state.reports));
+    }
+
+    // render products
+    function renderProducts(){
+      const el = $('#productsList'); el.innerHTML = '';
+      sampleProducts.forEach(p=>{
+        const div = document.createElement('div'); div.className='product';
+        div.innerHTML = `
+          <img src="${p.img}" alt="${p.name}">
+          <strong>${p.name}</strong>
+          <div>₹ ${p.price}</div>
+          <div class="actions">
+            <button data-id="${p.id}" class="add-w">Add wishlist</button>
+            <button data-id="${p.id}" class="buy">Buy</button>
+          </div>
+        `;
+        el.appendChild(div);
+      });
+    }
+
+    // render lists
+    function renderWishlist(){
+      const el = $('#wishlist'); el.innerHTML='';
+      state.wishlist.forEach(i=>{
+        const p = sampleProducts.find(s=>s.id===i.pid);
+        const li = document.createElement('li'); li.textContent = `${p.name} — ₹ ${p.price}`;
+        el.appendChild(li);
+      });
+      $('#viewWishlist').textContent = `Wishlist (${state.wishlist.length})`;
+    }
+    function renderOrders(){
+      const el = $('#ordersList'); el.innerHTML='';
+      state.orders.forEach(o=>{
+        const p = sampleProducts.find(s=>s.id===o.pid);
+        const li = document.createElement('li'); li.textContent = `Order #${o.oid} — ${p.name} — ₹ ${p.price}`;
+        el.appendChild(li);
+      });
+      $('#viewOrders').textContent = `Orders (${state.orders.length})`;
+    }
+    function renderReviews(){
+      const el = $('#reviews'); el.innerHTML='';
+      state.reviews.forEach(r=>{
+        const li = document.createElement('li'); li.innerHTML = `<strong>${r.by}</strong>: ${r.text}`;
+        el.appendChild(li);
+      });
+    }
+    function renderReports(){
+      const el = $('#reportsArea'); el.innerHTML='';
+      if(state.reports.length===0) el.textContent='No reports yet';
+      else{
+        state.reports.forEach((rep,i)=>{
+          const d = document.createElement('div'); d.style.marginTop='8px'; d.innerHTML = `<strong>#${i+1} ${rep.type}</strong><div>${rep.msg}</div><div style="font-size:12px;color:${'"+" + "#666" + "' }">by ${rep.by||'guest'}</div>`;
+          el.appendChild(d);
+        });
+      }
+    }
+
+    // initial render
+    function init(){
+      renderProducts(); renderWishlist(); renderOrders(); renderReviews(); renderReports(); updateUserPanel();
+    }
+
+    // navigation active link
+    document.querySelectorAll('.navlink').forEach(a=>a.addEventListener('click',e=>{document.querySelectorAll('.navlink').forEach(x=>x.classList.remove('active'));a.classList.add('active')}));
+
+    // open modal
+    $('#openLogin').addEventListener('click',()=>openModal('login'));
+    $('#openRegister').addEventListener('click',()=>openModal('register'));
+    $('#closeModal').addEventListener('click',()=>closeModal());
+    $('#toRegister').addEventListener('click',()=>showPanel('register'));
+    $('#toLogin').addEventListener('click',()=>showPanel('login'));
+
+    function openModal(which){
+      $('#modal').style.display='flex'; showPanel(which);
+    }
+    function closeModal(){ $('#modal').style.display='none'; }
+    function showPanel(which){ $('#modalTitle').textContent = which==='login'?'Login':'Register'; $('#loginPanel').style.display = which==='login'?'block':'none'; $('#registerPanel').style.display = which==='register'?'block':'none'; }
+
+    // registration validation
+    $('#registerForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const name = $('#regName').value.trim();
+      const email = $('#regEmail').value.trim().toLowerCase();
+      const pass = $('#regPass').value;
+      const pass2 = $('#regPass2').value;
+      let ok = true;
+      $('#nameErr').textContent=''; $('#emailErr').textContent=''; $('#passErr').textContent=''; $('#pass2Err').textContent='';
+      if(name.length<3){$('#nameErr').textContent='Name must be at least 3 chars'; ok=false}
+      if(!/^\S+@\S+\.\S+$/.test(email)){ $('#emailErr').textContent='Enter a valid email'; ok=false }
+      if(pass.length<6){ $('#passErr').textContent='Password must be 6+ chars'; ok=false }
+      if(pass!==pass2){ $('#pass2Err').textContent='Passwords do not match'; ok=false }
+      if(state.users.find(u=>u.email===email)){ $('#emailErr').textContent='Email already registered'; ok=false }
+      if(!ok) return;
+      const user = {id:Date.now(), name, email, pass}; state.users.push(user); state.currentUser = {id:user.id, name:user.name, email:user.email}; saveState(); init(); closeModal();
+      alert('Registered and logged in (demo)')
+    });
+
+    // login
+    $('#loginForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const email = $('#loginEmail').value.trim().toLowerCase();
+      const pass = $('#loginPass').value;
+      const user = state.users.find(u=>u.email===email && u.pass===pass);
+      if(!user){ $('#loginError').textContent='Invalid credentials'; return }
+      state.currentUser = {id:user.id, name:user.name, email:user.email}; saveState(); init(); closeModal();
+      alert('Logged in as '+user.name);
+    });
+
+    function updateUserPanel(){
+      const panel = $('#panelContent'); if(state.currentUser){ panel.innerHTML = `<p><strong>Hi, ${state.currentUser.name}</strong></p><p><button id="logoutBtn">Logout</button></p><p><button id="myAccount">My Account</button></p>`; $('#userArea').innerHTML = `<span style="padding:6px 8px;border-radius:8px;background:#eef">${state.currentUser.name}</span>`; $('#logoutBtn').addEventListener('click',()=>{state.currentUser=null; saveState(); init();}); $('#myAccount').addEventListener('click',()=>alert('Demo account: '+JSON.stringify(state.currentUser)))} else{ panel.innerHTML = `<p><strong>Not logged in</strong></p><p>Use register/login to test features.</p>`; $('#userArea').innerHTML = `<button id="openLogin">Login</button> <button id="openRegister">Register</button>`; $('#openLogin').addEventListener('click',()=>openModal('login')); $('#openRegister').addEventListener('click',()=>openModal('register')); }
+    }
+
+    // product actions
+    document.addEventListener('click', function(e){
+      if(e.target.matches('.add-w')){
+        const id = Number(e.target.dataset.id);
+        if(!state.currentUser){ alert('Please login to add to wishlist'); return }
+        state.wishlist.push({pid:id,by:state.currentUser.email}); saveState(); renderWishlist();
+      }
+      if(e.target.matches('.buy')){
+        const id = Number(e.target.dataset.id);
+        if(!state.currentUser){ alert('Please login to place order'); return }
+        state.orders.push({pid:id,oid:Date.now(),by:state.currentUser.email}); saveState(); renderOrders(); alert('Order placed (demo)')
+      }
+    });
+
+    // review form
+    $('#reviewForm').addEventListener('submit', function(e){ e.preventDefault(); const text = $('#revText').value.trim(); if(!text) return; const by = state.currentUser?state.currentUser.name:'guest'; state.reviews.unshift({text,by}); saveState(); $('#revText').value=''; renderReviews(); });
+
+    // report form
+    $('#reportForm').addEventListener('submit', function(e){ e.preventDefault(); const type = $('#issueType').value; const msg = $('#issueMsg').value.trim(); if(msg.length<6){ alert('Please provide more details (6+ chars)'); return } state.reports.push({type,msg,by: state.currentUser?state.currentUser.email:'guest'}); saveState(); $('#issueMsg').value=''; renderReports(); alert('Report submitted (demo)') });
+
+    // quick view buttons
+    $('#viewWishlist').addEventListener('click', ()=>{document.querySelector('html').scrollTop = 9999; alert('Wishlist shown below');});
+    $('#viewOrders').addEventListener('click', ()=>{document.querySelector('html').scrollTop = 9999; alert('Orders shown below');});
+
+    // first time sample user for convenience (only if no users exist)
+    if(state.users.length===0){ state.users.push({id:1,name:'Priya Sharma',email:'priya@example.com',pass:'password'}); saveState(); }
+
+    init();
+  </script>
+</body>
+</html>
